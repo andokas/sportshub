@@ -140,11 +140,6 @@ export default async function RaceCalendar() {
                         NEXT RACE
                       </span>
                     )}
-                    {isPastRace && (
-                      <span className="text-[9px] font-black tracking-widest text-gray-500">
-                        COMPLETED
-                      </span>
-                    )}
                   </div>
                   <h4 className={`${f1Font.className} text-base font-black uppercase italic leading-tight tracking-tight md:text-xl`}>
                     {race.raceName}

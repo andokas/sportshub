@@ -1,6 +1,7 @@
 import { getTeamStandings } from "@/lib/f1/api";
 import { getTeamColor } from "@/lib/f1/teams";
 import { f1Font, youngserifFont } from "@/lib/fonts";
+import Flag from "./Flag";
 
 export default async function TeamStandingsTable() {
   const standings = await getTeamStandings();
@@ -65,9 +66,12 @@ export default async function TeamStandingsTable() {
 
               {/* TEAM + barra de puntos */}
               <div className="min-w-0">
-                <h3 className={`${f1Font.className} truncate text-sm font-black uppercase italic tracking-wide md:text-lg`}>
-                  {s.team.name}
-                </h3>
+                <div className="flex items-center gap-2">
+                  <Flag nationality={s.team.nationality} />
+                    <h3 className={`${f1Font.className} truncate text-sm font-black uppercase italic tracking-wide md:text-lg`}>
+                      {s.team.name}
+                    </h3>
+                </div>
                 <div className="mt-2 h-1 w-full rounded-full bg-[#e4e3de]">
                   <div
                     className="h-1 rounded-full"

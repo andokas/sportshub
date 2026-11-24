@@ -2,6 +2,7 @@ import { getDriverStandings } from "@/lib/f1/api";
 import { getTeamColor } from "@/lib/f1/teams";
 import { f1Font, youngserifFont } from "@/lib/fonts";
 import Link from "next/link";
+import Flag from "./Flag";
 
 export default async function DriverStandingsTable() {
   const standings = await getDriverStandings();
@@ -67,17 +68,20 @@ export default async function DriverStandingsTable() {
 
               {/* DRIVER + TEAM + POINTS BAR */}
               <div className="min-w-0">
-                <h3 className={`${f1Font.className} truncate text-sm uppercase italic tracking-[0.04em] md:text-lg`}>
-                  <span className="font-normal">
-                    {s.driver.name}{" "}
-                  </span>
-                  <span className="font-bold">
-                    {s.driver.surname}
-                  </span>
-                  <span className="ml-2 text-[10px] font-bold not-italic tracking-[0.08em] text-gray-400">
-                    {s.driver.code}
-                  </span>
-                </h3>
+                <div className="flex items-center gap-2">
+                  <Flag nationality={s.driver.nationality} />
+                  <h3 className={`${f1Font.className} truncate text-sm uppercase italic tracking-[0.04em] md:text-lg`}>
+                    <span className="font-normal">
+                      {s.driver.name}{" "}
+                    </span>
+                    <span className="font-bold">
+                      {s.driver.surname}
+                    </span>
+                    <span className="ml-2 text-[10px] font-bold not-italic tracking-[0.08em] text-gray-400">
+                      {s.driver.code}
+                    </span>
+                  </h3>
+                </div>
 
                 <p className="mt-0.5 truncate text-[10px] font-bold uppercase tracking-[0.12em] text-gray-500">
                   {s.team.name}

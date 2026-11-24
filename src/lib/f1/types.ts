@@ -57,4 +57,5 @@ export type F1RaceResult = {
     points: number;
     grid: number;
     status: string;
+    finishLabel: string;
 }

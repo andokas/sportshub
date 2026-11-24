@@ -1,17 +1,14 @@
 import { Suspense } from "react";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getDriverStandings, getDriverResults } from "@/lib/f1/api";
 import { getTeamColor } from "@/lib/f1/teams";
 import { f1Font, youngserifFont } from "@/lib/fonts";
+import Flag from "@/app/f1/components/Flag";
+import DriverPhoto from "../../components/DriverPhotos";
 
 async function generateStaticParams() {
   const standings = await getDriverStandings();
   return standings.map((s) => ({ id: s.driver.id }));
-}
-
-function isFinished(status: string) {
-  return status === "Finished" || /^\+\d+ Laps?$/.test(status);
 }
 
 async function DriverResults({
@@ -49,7 +46,7 @@ async function DriverResults({
       </div>
 
       {results.map((r) => {
-        const finished = isFinished(r.status);
+        const finished = r.finishLabel.startsWith("P")
 
         return (
           <div
@@ -86,7 +83,7 @@ async function DriverResults({
                 finished ? "" : "text-gray-400"
               }`}
             >
-              {finished ? `P${r.position}` : "DNF"}
+              {r.finishLabel}
             </span>
 
             <span className="text-right text-sm font-bold tabular-nums md:text-base">
@@ -111,44 +108,42 @@ async function DriverContent({ params }: { params: Promise<{ id: string }> }) {
 
   return (
     <div className={youngserifFont.className}>
-      <Link
-        href="/f1/drivers"
-        className="mb-6 inline-block text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 hover:text-[#e10600]"
-      >
-        ← Pilotos
-      </Link>
+      {/* HEADER */}
+      <div className="mb-10">
+        <div className="flex items-center justify-between gap-6">
+          <div className="min-w-0 flex-1">
+            <h2 className={`${f1Font.className} text-5xl uppercase italic leading-[0.9] tracking-tight md:text-7xl`}>
+              {driver.name}
+              <br />
+              <span className="text-[#e10600]">{driver.surname}.</span>
+            </h2>
 
-    {/* HEADER */}
-    <div className="mb-10 border-b-[3px] border-[#171717] pb-6">
-        <h2
-            className={`${f1Font.className} text-5xl uppercase italic leading-[0.9] tracking-tight md:text-7xl`}
-        >
-            {driver.name}
-            <br />
-            <span className="text-[#e10600]">{driver.surname}.</span>
-        </h2>
-
-        <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2">
-            <span
-                className={`${f1Font.className} text-[120px] italic leading-[0.8] tracking-tighter md:text-[200px]`}
-                style={{ color: `${color}30` }}
-            >
+            <div className="mt-4 flex flex-col gap-3">
+              <span className={`${f1Font.className} text-[120px] italic leading-[0.8] tracking-tighter md:text-[200px]`} style={{ color: `${color}30` }} >
                 {driver.number ?? "—"}
-            </span>
+              </span>
 
-            <div className="flex items-center gap-4 self-stretch">
-                <span
-                    className="my-3 w-1.5 self-stretch"
-                    style={{ backgroundColor: color }}
-                />
-                <p
-                    className={`${f1Font.className} text-2xl uppercase italic tracking-tight md:text-4xl`}
-                >
-                    {team.name}
+              <div className="flex items-center gap-4">
+                <span className="h-7 w-1.5 md:h-9" style={{ backgroundColor: color }} />
+                <Flag nationality={team.nationality} className="!h-5 !w-7 md:!h-7 md:!w-10" />
+                <p className={`${f1Font.className} text-2xl uppercase italic tracking-tight md:text-4xl`}>
+                  {team.name}
                 </p>
+              </div>
             </div>
+          </div>
+
+          <div className="shrink-0">
+            <DriverPhoto
+              driverId={driver.id}
+              name={`${driver.name} ${driver.surname}`}
+              color={color}
+              className="h-52 w-40 rounded-lg md:h-80 md:w-64"
+            />
+          </div>
         </div>
-    </div>
+        <div className="border-b-[3px] border-[#171717] pb-6"></div>
+      </div>
 
       {/* SEASON STATS */}
       <div className="mb-10">
