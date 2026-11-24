@@ -12,6 +12,15 @@ const nextConfig: NextConfig = {
       },
     },
   },
+  async redirects() {
+    return [
+      {
+        source: "/f1",
+        destination: "/f1/drivers",
+        permanent: false,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

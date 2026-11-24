@@ -1,13 +1,27 @@
-import { F1Driver, F1Team, F1Circuit, F1DriverStanding, F1TeamStanding, F1RaceList } from "./types";
+import { F1Driver, F1Team, F1Circuit, F1DriverStanding, F1TeamStanding, F1RaceList, F1RaceResult } from "./types";
+import { cacheLife } from "next/cache";
 
-export async function getDriverStandings(season = "current"): Promise<F1DriverStanding[]> {
-  const response = await fetch("https://api.jolpi.ca/ergast/f1/" + season + "/driverstandings/?format=json");
+const BASE_URL = "https://api.jolpi.ca/ergast/f1";
+
+async function jolpicaFetch(path: string) {
+  const response = await fetch(`${BASE_URL}${path}`, {
+    headers: {
+      "User-Agent": "SportsHub",
+    },
+  });
 
   if (!response.ok) {
-    throw new Error("Error al obtener los datos");
+    throw new Error(`Error ${response.status} al obtener ${path}`);
   }
 
-  const data = await response.json();
+  return response.json();
+}
+
+export async function getDriverStandings(season = "current"): Promise<F1DriverStanding[]> {
+  "use cache";
+  cacheLife("hours");
+
+  const data = await jolpicaFetch(`/${season}/driverstandings/`);
   const list = data.MRData.StandingsTable.StandingsLists[0];
 
   if (!list) {
@@ -49,13 +63,10 @@ export async function getDriverStandings(season = "current"): Promise<F1DriverSt
 }
 
 export async function getTeamStandings(season = "current"): Promise<F1TeamStanding[]> {
-  const response = await fetch("https://api.jolpi.ca/ergast/f1/" + season + "/constructorstandings/?format=json");
+  "use cache";
+  cacheLife("hours");
 
-  if (!response.ok) {
-    throw new Error("Error al obtener los datos");
-  }
-
-  const data = await response.json();
+  const data = await jolpicaFetch(`/${season}/constructorstandings/`);
   const list = data.MRData.StandingsTable.StandingsLists[0];
 
   if (!list) {
@@ -84,13 +95,10 @@ export async function getTeamStandings(season = "current"): Promise<F1TeamStandi
 }
 
 export async function getRaceCalendar(season = "current"): Promise<F1RaceList[]> {
-  const response = await fetch("https://api.jolpi.ca/ergast/f1/" + season + "/?format=json&limit=100");
-
-  if (!response.ok) {
-    throw new Error("Error al obtener los datos");
-  }
-
-  const data = await response.json();
+  "use cache";
+  cacheLife("hours");
+  
+  const data = await jolpicaFetch("/" + season + "/?limit=100");
   const races = data.MRData.RaceTable.Races;
   
   if (!races || races.length === 0) {
@@ -120,4 +128,26 @@ export async function getRaceCalendar(season = "current"): Promise<F1RaceList[]>
   });
 
   return raceCalendar;
+}
+
+export async function getDriverResults(driverId: string, season = "current"): Promise<F1RaceResult[]> {
+  "use cache";
+  cacheLife("hours");
+
+  const data = await jolpicaFetch(
+    `/${season}/drivers/${driverId}/results/?limit=100`
+  );
+  const races = data.MRData.RaceTable.Races;
+
+  if (!races || races.length === 0) return [];
+
+  return races.map((r: any): F1RaceResult => ({
+    season: Number(r.season),
+    round: Number(r.round),
+    raceName: r.raceName,
+    position: Number(r.Results[0].position),
+    points: Number(r.Results[0].points),
+    grid: Number(r.Results[0].grid),
+    status: r.Results[0].status,
+  }));
 }

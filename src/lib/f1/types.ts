@@ -48,3 +48,13 @@ export type F1RaceList = {
     date: string;
     time: string;
 };
+
+export type F1RaceResult = {
+    season: number;
+    round: number;
+    raceName: string;
+    position: number;
+    points: number;
+    grid: number;
+    status: string;
+}

@@ -1,118 +1,116 @@
-
+import { connection } from "next/server";
 import { getRaceCalendar } from "@/lib/f1/api";
+import { f1Font, youngserifFont } from "@/lib/fonts";
 
-async function RaceCalendar() {
+// Si no hay hora (time), asumimos final del día en UTC (la "Z" es importante)
+function getRaceDate(race: { date: string; time?: string }) {
+  return new Date(`${race.date}T${race.time ?? "23:59:59Z"}`);
+}
+
+const dateFormatter = new Intl.DateTimeFormat("es-ES", {
+  day: "numeric",
+  month: "short",
+  year: "numeric",
+  timeZone: "Europe/Madrid",
+});
+
+const timeFormatter = new Intl.DateTimeFormat("es-ES", {
+  hour: "2-digit",
+  minute: "2-digit",
+  timeZone: "Europe/Madrid",
+});
+
+export default async function RaceCalendar() {
+  await connection(); // este componente depende de la fecha de hoy
   const races = await getRaceCalendar();
 
   const now = new Date();
-
-  const nextRace = races.find(
-    (race) =>
-      new Date(`${race.date}T${race.time || "23:59:59"}`) >= now
-  );
-
+  const nextRace = races.find((race) => getRaceDate(race) >= now);
   const season = races[0]?.season;
 
   return (
-    <main className="min-h-screen bg-[#f1f0ec] text-[#171717]">
+    <div className={`${youngserifFont.className} bg-[#f1f0ec] px-4 py-10 text-[#171717] md:px-6`}>
+      {/* HEADER */}
+      <section className="mb-8 flex items-end justify-between gap-6 px-6">
+        <div>
+          <h2 className={`${f1Font.className} text-4xl font-bold uppercase italic leading-[0.9] tracking-tight md:text-6xl`}>
+            Race
+            <br />
+            <span className="text-[#e10600]">
+              Calendar.
+            </span>
+          </h2>
+          <p className="mt-7 text-xs font-black tracking-[0.25em] text-gray-500">
+            {season} SEASON
+          </p>
+        </div>
 
-      {/* TITLE */}
-      <section className="max-w-7xl mx-auto px-6 pt-16 pb-12">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
-
-          <div>
-            <h1 className="text-7xl md:text-[110px] leading-[0.8] font-black italic tracking-tighter uppercase">
-              Race
-              <br />
-              <span className="text-[#e10600]">Calendar.</span>
-            </h1>
-
-            <p className="text-xs font-black tracking-[0.25em] mt-7 text-gray-500">
-              {season} SEASON
-            </p>
-          </div>
-
-          <div className="md:text-right">
-            <p className="text-xs text-gray-500 font-bold tracking-widest mb-2">
-              TOTAL ROUNDS
-            </p>
-
-            <p className="text-6xl font-black tracking-tighter">
-              {String(races.length).padStart(2, "0")}
-            </p>
-          </div>
-
+        <div className="text-right">
+          <p className="mb-2 text-xs font-bold tracking-widest text-gray-500">
+            TOTAL ROUNDS
+          </p>
+          <p className={`${f1Font.className} text-6xl font-black tracking-tighter`}>
+            {String(races.length).padStart(2, "0")}
+          </p>
         </div>
       </section>
 
       {/* NEXT RACE */}
       {nextRace && (
-        <section className="max-w-7xl mx-auto px-6 mb-14">
-          <div className="bg-[#171717] text-white relative overflow-hidden">
+        <section className="mb-14 px-6">
+          <div className="relative overflow-hidden bg-[#171717] text-white">
+            <div className="absolute right-0 top-0 h-full w-2 bg-[#e10600]" />
 
-            <div className="absolute top-0 right-0 w-2 h-full bg-[#e10600]" />
-
-            <div className="p-7 md:p-10 flex flex-col md:flex-row items-center justify-between gap-8">
-
-              {/* RACE INFO */}
-              <div className="flex-1 w-full">
-                <p className="text-[#e10600] text-xs font-black tracking-[0.3em] mb-5">
+            <div className="flex flex-col items-center justify-between gap-8 p-7 md:flex-row md:p-10">
+              <div className="w-full flex-1">
+                <p className="mb-5 text-xs font-black tracking-[0.3em] text-[#e10600]">
                   NEXT UP / ROUND {nextRace.round}
                 </p>
-
-                <h2 className="text-3xl md:text-5xl font-black italic uppercase tracking-tight">
+                <h3 className={`${f1Font.className} text-3xl font-black uppercase italic tracking-tight md:text-4xl`}>
                   {nextRace.raceName}
-                </h2>
-
-                <p className="text-gray-400 mt-3 text-[11px] font-medium tracking-[0.2em] uppercase">
+                </h3>
+                <p className="mt-3 text-[11px] font-medium uppercase tracking-[0.2em] text-gray-400">
                   {nextRace.Circuit.circuitName}
                 </p>
               </div>
 
-              {/* CIRCUIT SVG */}
-              <div className="w-full md:w-[35%] h-36 flex items-center justify-center">
+              <div className="flex h-36 w-full items-center justify-center md:w-[35%]">
                 <img
                   src={`/f1/circuits/${season}/${nextRace.Circuit.circuitId}.svg`}
                   alt={`Trazado de ${nextRace.Circuit.circuitName}`}
-                  className="w-full h-full object-contain opacity-80"
+                  className="h-full w-full object-contain opacity-80"
                 />
               </div>
 
-              {/* DATE */}
-              <div className="md:text-right self-end md:self-center shrink-0">
-                <p className="text-gray-500 text-xs font-bold tracking-widest">
+              <div className="shrink-0 self-end md:self-center md:text-right">
+                <p className="text-xs font-bold tracking-widest text-gray-500">
                   RACE DATE
                 </p>
-
-                <p className="text-3xl md:text-4xl font-black mt-2">
-                  {nextRace.date}
+                <p className={`${f1Font.className} mt-2 text-2xl font-black md:text-3xl`}>
+                  {dateFormatter.format(getRaceDate(nextRace))}
                 </p>
-
-                <p className="text-[#e10600] font-bold text-sm mt-2">
-                  {nextRace.time || "TIME TBC"}
+                <p className="mt-2 text-sm font-bold text-[#e10600]">
+                  {nextRace.time
+                    ? timeFormatter.format(getRaceDate(nextRace))
+                    : "TIME TBC"}
                 </p>
               </div>
-
             </div>
           </div>
         </section>
       )}
 
       {/* CALENDAR */}
-      <section className="max-w-7xl mx-auto px-6 pb-20">
-
-        <div className="border-b-2 border-black pb-4 mb-0">
-          <h2 className="font-black uppercase tracking-widest text-sm">
+      <section className="px-6 pb-20">
+        <div className="border-b-2 border-black pb-4">
+          <h3 className={`${f1Font.className} text-sm font-black uppercase tracking-widest`}>
             Full season schedule
-          </h2>
+          </h3>
         </div>
 
         <div>
           {races.map((race) => {
-            const raceDate = new Date(
-              `${race.date}T${race.time || "23:59:59"}`
-            );
-
+            const raceDate = getRaceDate(race);
             const isPastRace = raceDate < now;
             const isNext = nextRace?.round === race.round;
 
@@ -122,114 +120,81 @@ async function RaceCalendar() {
                 className={`
                   group grid
                   grid-cols-[40px_minmax(0,1fr)_65px]
-                  md:grid-cols-[90px_minmax(0,1fr)_110px_180px_130px]
-                  items-center gap-3 md:gap-8 py-6
-                  border-b border-[#d0cfca]
-                  transition-colors duration-200
-                  hover:bg-white px-3
+                  items-center gap-3 border-b border-[#d0cfca] px-3 py-6
+                  transition-colors duration-200 hover:bg-white
+                  md:grid-cols-[60px_minmax(0,1fr)_100px_110px_80px] md:gap-6
                   ${isPastRace ? "opacity-45" : ""}
                   ${isNext ? "border-l-4 border-l-[#e10600]" : ""}
                 `}
               >
-
                 {/* ROUND */}
-                <div>
-                  <span className="text-3xl md:text-5xl font-black italic tracking-tighter text-[#c9c8c3] group-hover:text-[#e10600] transition-colors">
-                    {String(race.round).padStart(2, "0")}
-                  </span>
-                </div>
+                <span className={`${f1Font.className} text-3xl font-black italic tracking-tighter text-[#c9c8c3] transition-colors group-hover:text-[#e10600] md:text-4xl`}>
+                  {String(race.round).padStart(2, "0")}
+                </span>
 
                 {/* RACE INFO */}
                 <div className="min-w-0">
-
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="mb-1 flex items-center gap-2">
                     {isNext && (
-                      <span className="bg-[#e10600] text-white text-[9px] font-black px-2 py-1 tracking-widest">
+                      <span className="bg-[#e10600] px-2 py-1 text-[9px] font-black tracking-widest text-white">
                         NEXT RACE
                       </span>
                     )}
-
                     {isPastRace && (
                       <span className="text-[9px] font-black tracking-widest text-gray-500">
                         COMPLETED
                       </span>
                     )}
                   </div>
-
-                  <h3 className="font-black text-base md:text-2xl uppercase italic tracking-tight leading-tight">
+                  <h4 className={`${f1Font.className} text-base font-black uppercase italic leading-tight tracking-tight md:text-xl`}>
                     {race.raceName}
-                  </h3>
-
-                  <p className="text-[10px] md:text-[11px] text-gray-500 mt-1 font-medium tracking-[0.12em] uppercase">
+                  </h4>
+                  <p className="mt-1 text-[10px] font-medium uppercase tracking-[0.12em] text-gray-500 md:text-[11px]">
                     {race.Circuit.circuitName}
                   </p>
-
                 </div>
 
                 {/* CIRCUIT SVG */}
-                <div className="h-14 md:h-20 flex items-center justify-center">
+                <div className="flex h-14 items-center justify-center md:h-16">
                   <img
                     src={`/f1/circuits/${season}/${race.Circuit.circuitId}.svg`}
                     alt={`Trazado de ${race.Circuit.circuitName}`}
-                    className="w-full h-full object-contain opacity-70 group-hover:opacity-100 transition-opacity duration-300"
+                    className="h-full w-full object-contain opacity-70 transition-opacity duration-300 group-hover:opacity-100"
                   />
                 </div>
 
                 {/* DATE */}
                 <div className="hidden md:block">
-                  <p className="text-[9px] text-gray-400 font-black tracking-[0.2em] mb-1">
+                  <p className="mb-1 text-[9px] font-black tracking-[0.2em] text-gray-400">
                     RACE DATE
                   </p>
-
-                  <p className="font-bold text-sm">
-                    {race.date}
+                  <p className="text-sm font-bold">
+                    {dateFormatter.format(raceDate)}
                   </p>
                 </div>
 
                 {/* TIME / STATUS */}
                 <div className="text-right">
-                  <p className="text-[9px] text-gray-400 font-black tracking-[0.2em] mb-1">
-                    {isPastRace ? "STATUS" : "START TIME"}
+                  <p className="mb-1 text-[9px] font-black tracking-[0.2em] text-gray-400">
+                    {isPastRace ? "STATUS" : "START"}
                   </p>
-
                   <p
-                    className={`font-black text-xs md:text-sm ${
-                      isPastRace
-                        ? "text-gray-400"
-                        : "text-[#e10600]"
+                    className={`${f1Font.className} text-xs font-black md:text-sm ${
+                      isPastRace ? "text-gray-400" : "text-[#e10600]"
                     }`}
                   >
                     {isPastRace
                       ? "FINISHED"
-                      : race.time || "TBC"}
+                      : race.time
+                        ? timeFormatter.format(raceDate)
+                        : "TBC"}
                   </p>
                 </div>
-
               </article>
             );
           })}
         </div>
       </section>
-
-      {/* FOOTER */}
-      <footer className="bg-[#171717] text-white">
-        <div className="max-w-7xl mx-auto px-6 py-6 flex justify-between items-center">
-
-          <span className="text-xs font-black italic tracking-widest">
-            RACE CALENDAR
-          </span>
-
-          <span className="text-[10px] text-gray-500 tracking-widest">
-            BUILT FOR MOTORSPORT FANS
-          </span>
-
-        </div>
-      </footer>
-
-    </main>
+    </div>
   );
-}
-
-export default function F1Page() {
-  return <RaceCalendar />;
 }
