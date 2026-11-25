@@ -4,8 +4,8 @@ import { f1Font, youngserifFont } from "@/lib/fonts";
 import Link from "next/link";
 import Flag from "./Flag";
 
-export default async function DriverStandingsTable() {
-  const standings = await getDriverStandings();
+export default async function DriverStandingsTable({ season }: { season: string }) {
+  const standings = await getDriverStandings(season);
   const leaderPoints = Math.max(...standings.map((s) => s.points), 1);
 
   return (
@@ -48,7 +48,7 @@ export default async function DriverStandingsTable() {
           return (
             <Link
               key={s.driver.id}
-              href={`/f1/drivers/${s.driver.id}`}
+              href={`/f1/${season}/drivers/${s.driver.id}`}
               className="group relative grid grid-cols-[40px_minmax(0,1fr)_70px_50px] items-center gap-3 border-b border-[#d0cfca] px-3 py-4 transition-colors hover:bg-white md:grid-cols-[56px_minmax(0,1fr)_90px_70px] md:gap-5"
             >
               {/* TEAM COLOR */}
@@ -63,7 +63,7 @@ export default async function DriverStandingsTable() {
                   index === 0 ? "text-[#e10600]" : "text-[#b5b4af]"
                 }`}
               >
-                {String(s.position).padStart(2, "0")}
+                {s.position === null ? "—" : String(s.position).padStart(2, "0")}
               </span>
 
               {/* DRIVER + TEAM + POINTS BAR */}

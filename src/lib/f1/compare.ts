@@ -12,8 +12,8 @@ export function getWinner(row: CompareRow): "a" | "b" | "tie" | null {
 }
 
 export function buildCompareRows(
-  a: { position: number; points: number; wins: number; stats: F1DriverStats },
-  b: { position: number; points: number; wins: number; stats: F1DriverStats }
+  a: { position: number | null; points: number; wins: number; stats: F1DriverStats },
+  b: { position: number | null; points: number; wins: number; stats: F1DriverStats }
 ): CompareRow[] {
   return [
     { label: "Position", a: a.position, b: b.position, better: "lower" },

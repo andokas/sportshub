@@ -2,11 +2,11 @@ import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { getDriverStandings, getDriverResults, getDriverSprints } from "@/lib/f1/api";
 import { computeDriverStats } from "@/lib/f1/stats";
-import CompareSelector from "../components/CompareSelector";
+import CompareSelector from "../../components/CompareSelector";
 import CompareTable from "@/app/f1/components/CompareTable";
 import { buildCompareRows, buildCumulativePoints } from "@/lib/f1/compare";
 import { getCompareColors } from "@/lib/f1/teams";
-import PointsChart from "../components/PointsChart";
+import PointsChart from "../../components/PointsChart";
 
 async function CompareContent({
   searchParams,

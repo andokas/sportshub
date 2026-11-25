@@ -18,7 +18,7 @@ export function getFinishLabel(status: string, position: number) {
 export function computeDriverStats(results: F1RaceResult[]): F1DriverStats {
   const started = results.filter((r) => r.finishLabel !== "DNS");
   const finished = started.filter((r) => r.finished);
-  const withGrid = started.filter((r) => r.grid > 0); // grid 0 = pit lane
+  const withGrid = started.filter((r) => r.grid > 0 && !r.shared);
 
   return {
     races: started.length,
@@ -27,9 +27,9 @@ export function computeDriverStats(results: F1RaceResult[]): F1DriverStats {
     bestFinish:
       finished.length > 0 ? Math.min(...finished.map((r) => r.position)) : null,
     avgGrid: average(withGrid.map((r) => r.grid)),
-    avgFinish: average(finished.map((r) => r.position)),
+    avgFinish: average(finished.filter((r) => !r.shared).map((r) => r.position)),
     positionsGained: finished
-      .filter((r) => r.grid > 0)
+      .filter((r) => r.grid > 0 && !r.shared)
       .reduce((sum, r) => sum + (r.grid - r.position), 0),
   };
 }

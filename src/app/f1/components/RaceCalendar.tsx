@@ -20,13 +20,12 @@ const timeFormatter = new Intl.DateTimeFormat("es-ES", {
   timeZone: "Europe/Madrid",
 });
 
-export default async function RaceCalendar() {
+export default async function RaceCalendar({ season }: { season: string }) {
   await connection(); // este componente depende de la fecha de hoy
-  const races = await getRaceCalendar();
+  const races = await getRaceCalendar(season);
 
   const now = new Date();
   const nextRace = races.find((race) => getRaceDate(race) >= now);
-  const season = races[0]?.season;
 
   return (
     <div className={`${youngserifFont.className} bg-[#f1f0ec] px-4 py-10 text-[#171717] md:px-6`}>

@@ -26,15 +26,16 @@ export type F1Circuit = {
 };
 
 export type F1DriverStanding = {
-    position: number;
+    position: number | null;
     points: number;
     wins: number;
     driver: F1Driver;
     team: F1Team;
+    teams: F1Team[];
 };
 
 export type F1TeamStanding = {
-    position: number;
+    position: number | null;
     points: number;
     wins: number;
     team: F1Team;
@@ -59,6 +60,8 @@ export type F1RaceResult = {
     status: string;
     finished: boolean;
     finishLabel: string;
+    team: { id: string; name: string };
+    shared: boolean;
 }
 
 export type F1SprintResult = {

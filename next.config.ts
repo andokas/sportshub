@@ -16,7 +16,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/f1",
-        destination: "/f1/drivers",
+        destination: "/f1/current/drivers",
         permanent: false,
       },
     ];

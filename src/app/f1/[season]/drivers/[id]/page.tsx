@@ -4,21 +4,19 @@ import { getDriverStandings, getDriverResults } from "@/lib/f1/api";
 import { getTeamColor } from "@/lib/f1/teams";
 import { f1Font, youngserifFont } from "@/lib/fonts";
 import Flag from "@/app/f1/components/Flag";
-import DriverPhoto from "../../components/DriverPhotos";
-
-export async function generateStaticParams() {
-  const standings = await getDriverStandings();
-  return standings.map((s) => ({ id: s.driver.id }));
-}
+import DriverPhoto from "../../../components/DriverPhotos";
+import {resolveSeason} from "@/lib/f1/season";
 
 async function DriverResults({
   driverId,
-  color,
+  season,
+  multiTeam,
 }: {
   driverId: string;
-  color: string;
+  season: string;
+  multiTeam: boolean;
 }) {
-  const results = await getDriverResults(driverId);
+  const results = await getDriverResults(driverId, season);
 
   if (results.length === 0) {
     return <p className="text-sm text-gray-500">Sin resultados todavía.</p>;
@@ -55,7 +53,7 @@ async function DriverResults({
           >
             <span
                 className="absolute bottom-0 left-0 top-0 w-1"
-                style={{ backgroundColor: color }}
+                style={{ backgroundColor: getTeamColor(r.team.id) }}
             />
 
             <span className="text-lg font-black italic tabular-nums text-[#b5b4af] md:text-2xl">
@@ -71,11 +69,16 @@ async function DriverResults({
                   {r.status}
                 </p>
               )}
+              {multiTeam && (
+                <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-500">
+                  {r.team.name}
+                </p>
+              )}
             </div>
 
             {/* grid = 0 significa salida desde el pit lane */}
             <span className="text-right text-sm font-bold tabular-nums text-gray-500">
-              {r.grid === 0 ? "PL" : `P${r.grid}`}
+              {r.shared ? "SHC" : r.grid === 0 ? "PL" : `P${r.grid}`}
             </span>
 
             <span
@@ -96,15 +99,17 @@ async function DriverResults({
   );
 }
 
-async function DriverContent({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const standings = await getDriverStandings();
+async function DriverContent({ params }: { params: Promise<{ id: string; season: string }> }) {
+  const { id, season: seasonParam } = await params;
+  const season = await resolveSeason(seasonParam);
+  const standings = await getDriverStandings(season);
   const standing = standings.find((s) => s.driver.id === id);
 
   if (!standing) notFound();
 
-  const { driver, team } = standing;
+  const { driver, team, teams } = standing;
   const color = getTeamColor(team.id);
+  const multiTeam = teams.length > 1;
 
   return (
     <div className={youngserifFont.className}>
@@ -123,12 +128,19 @@ async function DriverContent({ params }: { params: Promise<{ id: string }> }) {
                 {driver.number ?? "—"}
               </span>
 
-              <div className="flex items-center gap-4">
-                <span className="h-7 w-1.5 md:h-9" style={{ backgroundColor: color }} />
-                <Flag nationality={team.nationality} className="!h-5 !w-7 md:!h-7 md:!w-10" />
-                <p className={`${f1Font.className} text-2xl uppercase italic tracking-tight md:text-4xl`}>
-                  {team.name}
-                </p>
+              <div className="flex flex-col gap-3">
+                {teams.map((t) => (
+                  <div key={t.id} className="flex items-center gap-4">
+                    <span className="h-7 w-1.5 md:h-9" style={{ backgroundColor: getTeamColor(t.id) }} />
+                    <Flag nationality={t.nationality} className="!h-5 !w-7 md:!h-7 md:!w-10" />
+                    <p className={`${f1Font.className} uppercase italic tracking-tight ${
+                        multiTeam ? "text-xl md:text-2xl" : "text-2xl md:text-4xl"
+                      }`}
+                    >
+                      {t.name}
+                    </p>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
@@ -155,7 +167,7 @@ async function DriverContent({ params }: { params: Promise<{ id: string }> }) {
 
         <div className="grid grid-cols-3 gap-3">
           {[
-            { label: "Position", value: standing.position },
+            { label: "Position", value: standing.position ?? "—" },
             { label: "Points", value: standing.points },
             { label: "Wins", value: standing.wins },
           ].map((stat) => (
@@ -185,7 +197,7 @@ async function DriverContent({ params }: { params: Promise<{ id: string }> }) {
         </h3>
 
         <Suspense fallback={<p className="text-sm text-gray-500">Cargando resultados...</p>}>
-          <DriverResults driverId={id} color={color} />
+          <DriverResults driverId={id} season={season} multiTeam={multiTeam} />
         </Suspense>
       </div>
 
@@ -196,7 +208,7 @@ async function DriverContent({ params }: { params: Promise<{ id: string }> }) {
 export default function DriverPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ id: string, season: string }>;
 }) {
   return (
     <Suspense fallback={<p className="p-6">Cargando piloto...</p>}>

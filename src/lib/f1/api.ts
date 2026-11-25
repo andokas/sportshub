@@ -18,7 +18,7 @@ async function jolpicaFetch(path: string) {
   return response.json();
 }
 
-export async function getDriverStandings(season = "current"): Promise<F1DriverStanding[]> {
+export async function getDriverStandings(season: string): Promise<F1DriverStanding[]> {
   "use cache";
   cacheLife("hours");
 
@@ -31,7 +31,7 @@ export async function getDriverStandings(season = "current"): Promise<F1DriverSt
   
   const standings = list.DriverStandings;
 
-  const driverStandings: F1DriverStanding[] = standings.map((s: any): F1DriverStanding => {
+  const driverStandings: F1DriverStanding[] = standings.map(async (s: any): Promise<F1DriverStanding> => {
       const driver: F1Driver = {
         id: s.Driver.driverId,
         number: s.Driver.permanentNumber 
@@ -44,18 +44,23 @@ export async function getDriverStandings(season = "current"): Promise<F1DriverSt
         nationality: s.Driver.nationality,
       };
 
-      const team: F1Team = {
-        id: s.Constructors[0].constructorId,
-        name: s.Constructors[0].name,
-        nationality: s.Constructors[0].nationality,
-      };
+      const teams: F1Team[] = s.Constructors.map((c: any): F1Team => ({
+        id: c.constructorId,
+        name: c.name,
+        nationality: c.nationality,
+      }));
+
+      const results = await getDriverResults(driver.id, season);
+
+      const totalPoints = results.reduce((sum, result) => sum + result.points, 0);
 
       return {
-        position: Number(s.position),
-        points: Number(s.points),
+        position: toNumberOrNull(s.position),
+        points: Number(totalPoints.toFixed(2)),
         wins: Number(s.wins),
         driver,
-        team
+        team: teams[teams.length - 1], // Último equipo del piloto en la temporada
+        teams,
       };
     }
   );
@@ -63,7 +68,7 @@ export async function getDriverStandings(season = "current"): Promise<F1DriverSt
   return driverStandings;
 }
 
-export async function getTeamStandings(season = "current"): Promise<F1TeamStanding[]> {
+export async function getTeamStandings(season: string): Promise<F1TeamStanding[]> {
   "use cache";
   cacheLife("hours");
 
@@ -71,7 +76,12 @@ export async function getTeamStandings(season = "current"): Promise<F1TeamStandi
   const list = data.MRData.StandingsTable.StandingsLists[0];
 
   if (!list) {
-    throw new Error("No se encontraron datos de clasificación para la temporada especificada");
+    if (season < "1958") {
+      return []; // No hay datos de clasificación de equipos antes de 1958
+    }
+    else {
+      throw new Error("No se encontraron datos de clasificación para la temporada especificada");
+    }
   }
 
   const standings = list.ConstructorStandings;
@@ -84,7 +94,7 @@ export async function getTeamStandings(season = "current"): Promise<F1TeamStandi
       };
 
       return {
-        position: Number(s.position),
+        position: toNumberOrNull(s.position),
         points: Number(s.points),
         wins: Number(s.wins),
         team
@@ -95,7 +105,7 @@ export async function getTeamStandings(season = "current"): Promise<F1TeamStandi
   return teamStandings;
 }
 
-export async function getRaceCalendar(season = "current"): Promise<F1RaceList[]> {
+export async function getRaceCalendar(season: string): Promise<F1RaceList[]> {
   "use cache";
   cacheLife("hours");
   
@@ -131,7 +141,7 @@ export async function getRaceCalendar(season = "current"): Promise<F1RaceList[]>
   return raceCalendar;
 }
 
-export async function getDriverResults(driverId: string, season = "current"): Promise<F1RaceResult[]> {
+export async function getDriverResults(driverId: string, season: string): Promise<F1RaceResult[]> {
   "use cache";
   cacheLife("hours");
 
@@ -142,17 +152,30 @@ export async function getDriverResults(driverId: string, season = "current"): Pr
 
   if (!races || races.length === 0) return [];
 
-  return races.map((r: any): F1RaceResult => ({
-    season: Number(r.season),
-    round: Number(r.round),
-    raceName: r.raceName,
-    position: Number(r.Results[0].position),
-    points: Number(r.Results[0].points),
-    grid: Number(r.Results[0].grid),
-    status: r.Results[0].status,
-    finished: isFinished(r.Results[0].status),
-    finishLabel: getFinishLabel(r.Results[0].status, Number(r.Results[0].position)),
-  }));
+  return races.map((r: any): F1RaceResult => {
+    const entries = r.Results;
+    const shared = entries.length > 1;
+    const main =
+      entries.find((e: any) => isFinished(e.status)) ?? entries[0];
+    const position = Number(main.position);
+
+    return {
+      season: Number(r.season),
+      round: Number(r.round),
+      raceName: r.raceName,
+      position,
+      points: entries.reduce((sum: number, e: any) => sum + Number(e.points), 0),
+      grid: Number(main.grid),
+      status: main.status,
+      finished: isFinished(main.status),
+      shared,
+      finishLabel: shared ? "SHC" : getFinishLabel(main.status, position),
+      team: {
+        id: main.Constructor.constructorId,
+        name: main.Constructor.name,
+      },
+    };
+  });
 }
 
 export async function getDriverSprints(
@@ -175,3 +198,21 @@ export async function getDriverSprints(
     points: Number(r.SprintResults[0].points),
   }));
 }
+
+export async function getSeasons(): Promise<number[]> {
+  "use cache";
+  cacheLife("days");
+
+  const data = await jolpicaFetch("/seasons/?limit=100");
+  const seasons = data.MRData.SeasonTable.Seasons;
+  return seasons.map((s: any) => Number(s.season)).sort((a: number, b: number) => b - a);
+}
+
+function toNumberOrNull(value: unknown): number | null {
+  if (value === null || value === undefined || value === '') {
+  return null;
+  }
+
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
+}   
