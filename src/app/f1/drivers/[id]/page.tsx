@@ -6,7 +6,7 @@ import { f1Font, youngserifFont } from "@/lib/fonts";
 import Flag from "@/app/f1/components/Flag";
 import DriverPhoto from "../../components/DriverPhotos";
 
-async function generateStaticParams() {
+export async function generateStaticParams() {
   const standings = await getDriverStandings();
   return standings.map((s) => ({ id: s.driver.id }));
 }
@@ -46,7 +46,7 @@ async function DriverResults({
       </div>
 
       {results.map((r) => {
-        const finished = r.finishLabel.startsWith("P")
+        const finished = r.finished;
 
         return (
           <div

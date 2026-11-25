@@ -57,5 +57,16 @@ export type F1RaceResult = {
     points: number;
     grid: number;
     status: string;
+    finished: boolean;
     finishLabel: string;
 }
+
+export type F1DriverStats = {
+  races: number;
+  podiums: number;
+  dnfs: number;
+  bestFinish: number | null;
+  avgGrid: number | null;
+  avgFinish: number | null;
+  positionsGained: number;
+};

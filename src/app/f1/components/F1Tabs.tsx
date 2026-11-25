@@ -9,6 +9,7 @@ const TABS = [
   { href: "/f1/drivers", label: "Pilotos" },
   { href: "/f1/teams", label: "Equipos" },
   { href: "/f1/calendar", label: "Calendario" },
+  { href: "/f1/compare", label: "Comparador" },
 ];
 
 function F1TabsContent() {

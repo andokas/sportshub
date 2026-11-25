@@ -1,3 +1,4 @@
+import { getFinishLabel, isFinished } from "./stats";
 import { F1Driver, F1Team, F1Circuit, F1DriverStanding, F1TeamStanding, F1RaceList, F1RaceResult } from "./types";
 import { cacheLife } from "next/cache";
 
@@ -141,17 +142,6 @@ export async function getDriverResults(driverId: string, season = "current"): Pr
 
   if (!races || races.length === 0) return [];
 
-  function isFinished(status: string) {
-    return status === "Finished" || status === "Lapped" || /^\+\d+ Laps?$/.test(status);
-  }
-
-  function getFinishLabel(status: string, position: number) {
-    if (isFinished(status)) return `P${position}`;
-    if (status === "Did not start" || status === "DNS") return "DNS";
-    if (status === "Disqualified" || status === "DSQ") return "DSQ";
-    return "DNF";
-  }
-
   return races.map((r: any): F1RaceResult => ({
     season: Number(r.season),
     round: Number(r.round),
@@ -160,6 +150,7 @@ export async function getDriverResults(driverId: string, season = "current"): Pr
     points: Number(r.Results[0].points),
     grid: Number(r.Results[0].grid),
     status: r.Results[0].status,
+    finished: isFinished(r.Results[0].status),
     finishLabel: getFinishLabel(r.Results[0].status, Number(r.Results[0].position)),
   }));
 }
