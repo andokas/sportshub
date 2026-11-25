@@ -1,12 +1,4 @@
-import { F1DriverStats } from "./types";
-
-export type CompareRow = {
-  label: string;
-  a: number | null;
-  b: number | null;
-  better: "higher" | "lower" | "none"; // "none" = dato informativo, sin ganador
-  decimals?: number;
-};
+import { CompareRow, F1DriverStats, CumulativePoint, F1RaceResult, F1SprintResult } from "./types";
 
 export function getWinner(row: CompareRow): "a" | "b" | "tie" | null {
   if (row.better === "none") return null;
@@ -35,4 +27,37 @@ export function buildCompareRows(
     { label: "Avg. finish", a: a.stats.avgFinish, b: b.stats.avgFinish, better: "lower", decimals: 1 },
     { label: "Positions gained", a: a.stats.positionsGained, b: b.stats.positionsGained, better: "higher" },
   ];
+}
+
+export function buildCumulativePoints(
+  resultsA: F1RaceResult[],
+  resultsB: F1RaceResult[],
+  sprintsA: F1SprintResult[] = [],
+  sprintsB: F1SprintResult[] = []
+): CumulativePoint[] {
+  const rounds = [
+    ...new Set([...resultsA.map((r) => r.round), ...resultsB.map((r) => r.round)]),
+  ].sort((x, y) => x - y);
+
+  let pointsA = 0;
+  let pointsB = 0;
+
+  return rounds.map((round) => {
+    const resultA = resultsA.find((r) => r.round === round);
+    const resultB = resultsB.find((r) => r.round === round);
+
+    pointsA +=
+      (resultA?.points ?? 0) +
+      (sprintsA.find((s) => s.round === round)?.points ?? 0);
+    pointsB +=
+      (resultB?.points ?? 0) +
+      (sprintsB.find((s) => s.round === round)?.points ?? 0);
+
+    return {
+      round,
+      raceName: resultA?.raceName ?? resultB?.raceName ?? "",
+      pointsA,
+      pointsB,
+    };
+  });
 }

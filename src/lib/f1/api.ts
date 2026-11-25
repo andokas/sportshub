@@ -1,5 +1,5 @@
 import { getFinishLabel, isFinished } from "./stats";
-import { F1Driver, F1Team, F1Circuit, F1DriverStanding, F1TeamStanding, F1RaceList, F1RaceResult } from "./types";
+import { F1Driver, F1Team, F1Circuit, F1DriverStanding, F1TeamStanding, F1RaceList, F1RaceResult, F1SprintResult } from "./types";
 import { cacheLife } from "next/cache";
 
 const BASE_URL = "https://api.jolpi.ca/ergast/f1";
@@ -152,5 +152,26 @@ export async function getDriverResults(driverId: string, season = "current"): Pr
     status: r.Results[0].status,
     finished: isFinished(r.Results[0].status),
     finishLabel: getFinishLabel(r.Results[0].status, Number(r.Results[0].position)),
+  }));
+}
+
+export async function getDriverSprints(
+  driverId: string,
+  season = "current"
+): Promise<F1SprintResult[]> {
+  "use cache";
+  cacheLife("hours");
+
+  const data = await jolpicaFetch(
+    `/${season}/drivers/${driverId}/sprint/?limit=100`
+  );
+  const races = data.MRData.RaceTable.Races;
+
+  if (!races || races.length === 0) return [];
+
+  return races.map((r: any): F1SprintResult => ({
+    round: Number(r.round),
+    position: Number(r.SprintResults[0].position),
+    points: Number(r.SprintResults[0].points),
   }));
 }

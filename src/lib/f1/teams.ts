@@ -15,3 +15,10 @@ const TEAM_COLORS: Record<string, string> = {
 export function getTeamColor(teamId: string) {
   return TEAM_COLORS[teamId] ?? "#9ca3af";
 }
+
+export function getCompareColors(teamIdA: string, teamIdB: string) {
+  const colorA = getTeamColor(teamIdA);
+  // Si son compañeros de equipo, B usa un color neutro para distinguirlos
+  const colorB = teamIdA === teamIdB ? "#171717" : getTeamColor(teamIdB);
+  return { colorA, colorB };
+}

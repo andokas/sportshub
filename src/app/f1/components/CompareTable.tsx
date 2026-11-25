@@ -1,7 +1,7 @@
 
-import { CompareRow, getWinner } from "@/lib/f1/compare";
-import { getTeamColor } from "@/lib/f1/teams";
-import { F1DriverStanding } from "@/lib/f1/types";
+import { getWinner } from "@/lib/f1/compare";
+import { getCompareColors } from "@/lib/f1/teams";
+import { F1DriverStanding, CompareRow } from "@/lib/f1/types";
 import { f1Font } from "@/lib/fonts";
 
 function formatValue(value: number | null, decimals = 0) {
@@ -17,9 +17,7 @@ export default function CompareTable({
   b: F1DriverStanding;
   rows: CompareRow[];
 }) {
-  const colorA = getTeamColor(a.team.id);
-  // Si son compañeros de equipo, B usa un color neutro para distinguirlos
-  const colorB = a.team.id === b.team.id ? "#171717" : getTeamColor(b.team.id);
+  const { colorA, colorB } = getCompareColors(a.team.id, b.team.id);
 
   return (
     <div className="mt-8">

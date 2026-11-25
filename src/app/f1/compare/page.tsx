@@ -1,10 +1,12 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
-import { getDriverStandings, getDriverResults } from "@/lib/f1/api";
+import { getDriverStandings, getDriverResults, getDriverSprints } from "@/lib/f1/api";
 import { computeDriverStats } from "@/lib/f1/stats";
-import { buildCompareRows } from "@/lib/f1/compare";
 import CompareSelector from "../components/CompareSelector";
 import CompareTable from "@/app/f1/components/CompareTable";
+import { buildCompareRows, buildCumulativePoints } from "@/lib/f1/compare";
+import { getCompareColors } from "@/lib/f1/teams";
+import PointsChart from "../components/PointsChart";
 
 async function CompareContent({
   searchParams,
@@ -30,9 +32,11 @@ async function CompareContent({
   const standingB = standings.find((s) => s.driver.id === idB);
   if (!standingA || !standingB) notFound();
 
-  const [resultsA, resultsB] = await Promise.all([
+  const [resultsA, resultsB, sprintsA, sprintsB] = await Promise.all([
     getDriverResults(idA),
     getDriverResults(idB),
+    getDriverSprints(idA),
+    getDriverSprints(idB),
   ]);
 
   const rows = buildCompareRows(
@@ -49,7 +53,15 @@ async function CompareContent({
           Elige dos pilotos distintos para compararlos.
         </p>
       ) : (
-        <CompareTable a={standingA} b={standingB} rows={rows} />
+        <>
+          <CompareTable a={standingA} b={standingB} rows={rows} />
+          <PointsChart
+            data={buildCumulativePoints(resultsA, resultsB, sprintsA, sprintsB)}
+            nameA={`${standingA.driver.name} ${standingA.driver.surname}`}
+            nameB={`${standingB.driver.name} ${standingB.driver.surname}`}
+            {...getCompareColors(standingA.team.id, standingB.team.id)}
+          />
+        </>
       )}
     </div>
   );

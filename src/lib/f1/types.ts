@@ -61,6 +61,12 @@ export type F1RaceResult = {
     finishLabel: string;
 }
 
+export type F1SprintResult = {
+  round: number;
+  position: number;
+  points: number;
+};
+
 export type F1DriverStats = {
   races: number;
   podiums: number;
@@ -69,4 +75,19 @@ export type F1DriverStats = {
   avgGrid: number | null;
   avgFinish: number | null;
   positionsGained: number;
+};
+
+export type CompareRow = {
+  label: string;
+  a: number | null;
+  b: number | null;
+  better: "higher" | "lower" | "none";
+  decimals?: number;
+};
+
+export type CumulativePoint = {
+  round: number;
+  raceName: string;
+  pointsA: number;
+  pointsB: number;
 };
