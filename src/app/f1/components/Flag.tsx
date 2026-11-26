@@ -1,4 +1,4 @@
-import { getFlagCode } from "@/lib/f1/flags";
+import { getFlagCode, getHistoricalFlag } from "@/lib/f1/flags";
 
 export default function Flag({
   nationality,
@@ -7,13 +7,22 @@ export default function Flag({
   nationality: string;
   className?: string;
 }) {
+  const historicalFlag = getHistoricalFlag(nationality);
   const code = getFlagCode(nationality);
-  if (!code) return null;
+
+  const src = historicalFlag
+    ?? (code ? `https://flagcdn.com/w40/${code}.png` : null);
+
+  if (!src) return null;
 
   return (
     <img
-      src={`https://flagcdn.com/w40/${code}.png`}
-      srcSet={`https://flagcdn.com/w80/${code}.png 2x`}
+      src={src}
+      srcSet={
+        historicalFlag
+          ? undefined
+          : `https://flagcdn.com/w80/${code}.png 2x`
+      }
       width={20}
       height={15}
       alt={nationality}
